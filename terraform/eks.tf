@@ -11,6 +11,13 @@ module "eks" {
   # Allow kubectl access from your laptop
   cluster_endpoint_public_access = true
 
+  # EBS CSI driver installed automatically — required for PVC on EKS 1.23+
+  cluster_addons = {
+    aws-ebs-csi-driver = {
+      most_recent = true
+    }
+  }
+
   eks_managed_node_groups = {
     petclinic = {
       instance_types = ["t3.medium"]
@@ -18,10 +25,9 @@ module "eks" {
       max_size       = 3
       desired_size   = 2
 
-      # Allows nodes to pull images from ECR without any imagePullSecret
-      # No 12-hour token expiry issue — works permanently via IAM role
       iam_role_additional_policies = {
         ecr_readonly = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
+        ebs_csi      = "arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy"
       }
     }
   }
