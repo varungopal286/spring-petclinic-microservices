@@ -16,11 +16,11 @@ services:
     replicas: 1
     resources:
       requests:
-        cpu: 200m
-        memory: 512Mi
+        cpu: 100m
+        memory: 256Mi
       limits:
         cpu: 500m
-        memory: 768Mi
+        memory: 512Mi
     initContainers: []
 
   discovery-server:
@@ -28,84 +28,84 @@ services:
     replicas: 1
     resources:
       requests:
-        cpu: 200m
-        memory: 512Mi
+        cpu: 100m
+        memory: 256Mi
       limits:
         cpu: 500m
-        memory: 768Mi
+        memory: 512Mi
     initContainers:
       - name: wait-config
-        url: http://config-server:8888/actuator/health
+        url: tcp://config-server:8888
 
   customers-service:
     port: 8081
-    replicas: 2
+    replicas: 1
     resources:
       requests:
-        cpu: 300m
-        memory: 512Mi
+        cpu: 200m
+        memory: 384Mi
       limits:
         cpu: 700m
-        memory: 768Mi
+        memory: 640Mi
     initContainers:
       - name: wait-config
-        url: http://config-server:8888/actuator/health
+        url: tcp://config-server:8888
       - name: wait-discovery
-        url: http://discovery-server:8761/actuator/health
+        url: tcp://discovery-server:8761
       - name: wait-mysql
         url: tcp://mysql:3306
 
   vets-service:
     port: 8083
-    replicas: 2
+    replicas: 1
     resources:
       requests:
-        cpu: 300m
-        memory: 512Mi
+        cpu: 200m
+        memory: 384Mi
       limits:
         cpu: 700m
-        memory: 768Mi
+        memory: 640Mi
     initContainers:
       - name: wait-config
-        url: http://config-server:8888/actuator/health
+        url: tcp://config-server:8888
       - name: wait-discovery
-        url: http://discovery-server:8761/actuator/health
+        url: tcp://discovery-server:8761
       - name: wait-mysql
         url: tcp://mysql:3306
 
   visits-service:
     port: 8082
-    replicas: 2
+    replicas: 1
     resources:
       requests:
-        cpu: 300m
-        memory: 512Mi
+        cpu: 200m
+        memory: 384Mi
       limits:
         cpu: 700m
-        memory: 768Mi
+        memory: 640Mi
     initContainers:
       - name: wait-config
-        url: http://config-server:8888/actuator/health
+        url: tcp://config-server:8888
       - name: wait-discovery
-        url: http://discovery-server:8761/actuator/health
+        url: tcp://discovery-server:8761
       - name: wait-mysql
         url: tcp://mysql:3306
 
   api-gateway:
     port: 8080
-    replicas: 2
+    replicas: 1
     resources:
       requests:
-        cpu: 300m
-        memory: 512Mi
+        cpu: 200m
+        memory: 384Mi
       limits:
         cpu: 700m
-        memory: 768Mi
+        memory: 640Mi
     initContainers:
       - name: wait-config
-        url: http://config-server:8888/actuator/health
+        url: tcp://config-server:8888
       - name: wait-discovery
-        url: http://discovery-server:8761/actuator/health
+        url: tcp://discovery-server:8761
 
 ingress:
   annotations:
@@ -116,8 +116,8 @@ ingress:
 
 hpa:
   enabled: true
-  minReplicas: 2
-  maxReplicas: 5
+  minReplicas: 1
+  maxReplicas: 3
   cpuUtilization: 70
   services:
     - api-gateway
