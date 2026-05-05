@@ -1,0 +1,111 @@
+# Default: deny all ingress within the petclinic namespace
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress
+  namespace: petclinic
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+---
+# config-server: accept from any pod in the same namespace
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-config-server
+  namespace: petclinic
+spec:
+  podSelector:
+    matchLabels:
+      app: config-server
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: petclinic
+---
+# discovery-server: accept from any pod in the same namespace
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-discovery-server
+  namespace: petclinic
+spec:
+  podSelector:
+    matchLabels:
+      app: discovery-server
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: petclinic
+---
+# mysql: accept ONLY from the three data-access services
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-mysql
+  namespace: petclinic
+spec:
+  podSelector:
+    matchLabels:
+      app: mysql
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: customers-service
+        - podSelector:
+            matchLabels:
+              app: vets-service
+        - podSelector:
+            matchLabels:
+              app: visits-service
+      ports:
+        - protocol: TCP
+          port: 3306
+---
+# api-gateway: accept from anywhere (ALB sends traffic from any source IP)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-api-gateway
+  namespace: petclinic
+spec:
+  podSelector:
+    matchLabels:
+      app: api-gateway
+  policyTypes:
+    - Ingress
+  ingress:
+    - {}
+---
+# business services: accept from api-gateway (Eureka load-balanced calls)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-business-services
+  namespace: petclinic
+spec:
+  podSelector:
+    matchExpressions:
+      - key: app
+        operator: In
+        values:
+          - customers-service
+          - vets-service
+          - visits-service
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: api-gateway
