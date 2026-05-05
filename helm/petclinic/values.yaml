@@ -1,0 +1,117 @@
+registry: 622215956811.dkr.ecr.ap-south-1.amazonaws.com
+imageTag: v1.0
+
+# SPRING_PROFILES_ACTIVE=docker points every service at http://config-server:8888
+# Add ",mysql" here in Day 4 once MySQL is deployed
+springProfiles: docker
+
+eurekaUrl: http://discovery-server:8761/eureka
+
+services:
+  config-server:
+    port: 8888
+    replicas: 1
+    resources:
+      requests:
+        cpu: 200m
+        memory: 512Mi
+      limits:
+        cpu: 500m
+        memory: 768Mi
+    initContainers: []
+
+  discovery-server:
+    port: 8761
+    replicas: 1
+    resources:
+      requests:
+        cpu: 200m
+        memory: 512Mi
+      limits:
+        cpu: 500m
+        memory: 768Mi
+    initContainers:
+      - name: wait-config
+        url: http://config-server:8888/actuator/health
+
+  customers-service:
+    port: 8081
+    replicas: 2
+    resources:
+      requests:
+        cpu: 300m
+        memory: 512Mi
+      limits:
+        cpu: 700m
+        memory: 768Mi
+    initContainers:
+      - name: wait-config
+        url: http://config-server:8888/actuator/health
+      - name: wait-discovery
+        url: http://discovery-server:8761/actuator/health
+
+  vets-service:
+    port: 8083
+    replicas: 2
+    resources:
+      requests:
+        cpu: 300m
+        memory: 512Mi
+      limits:
+        cpu: 700m
+        memory: 768Mi
+    initContainers:
+      - name: wait-config
+        url: http://config-server:8888/actuator/health
+      - name: wait-discovery
+        url: http://discovery-server:8761/actuator/health
+
+  visits-service:
+    port: 8082
+    replicas: 2
+    resources:
+      requests:
+        cpu: 300m
+        memory: 512Mi
+      limits:
+        cpu: 700m
+        memory: 768Mi
+    initContainers:
+      - name: wait-config
+        url: http://config-server:8888/actuator/health
+      - name: wait-discovery
+        url: http://discovery-server:8761/actuator/health
+
+  api-gateway:
+    port: 8080
+    replicas: 2
+    resources:
+      requests:
+        cpu: 300m
+        memory: 512Mi
+      limits:
+        cpu: 700m
+        memory: 768Mi
+    initContainers:
+      - name: wait-config
+        url: http://config-server:8888/actuator/health
+      - name: wait-discovery
+        url: http://discovery-server:8761/actuator/health
+
+ingress:
+  annotations:
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80}]'
+
+hpa:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 5
+  cpuUtilization: 70
+  services:
+    - api-gateway
+    - customers-service
+    - vets-service
+    - visits-service
