@@ -7,3 +7,5 @@ metadata:
 data:
   SPRING_PROFILES_ACTIVE: {{ .Values.springProfiles | quote }}
   EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: {{ .Values.eurekaUrl | quote }}
+  SPRING_DATASOURCE_URL: {{ .Values.mysql.url | quote }}
+  SPRING_DATASOURCE_USERNAME: {{ .Values.mysql.username | quote }}

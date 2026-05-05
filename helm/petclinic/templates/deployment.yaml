@@ -25,11 +25,21 @@ spec:
           command:
             - sh
             - -c
+            {{- if hasPrefix "tcp://" .url }}
+            - |
+              HOST={{ trimPrefix "tcp://" .url | splitList ":" | first }}
+              PORT={{ trimPrefix "tcp://" .url | splitList ":" | last }}
+              until nc -z $HOST $PORT; do
+                echo "Waiting for $HOST:$PORT..."
+                sleep 5
+              done
+            {{- else }}
             - |
               until wget -qO- {{ .url }} | grep -q UP; do
                 echo "Waiting for {{ .url }}..."
                 sleep 5
               done
+            {{- end }}
         {{- end }}
       {{- end }}
       containers:
@@ -40,6 +50,8 @@ spec:
           envFrom:
             - configMapRef:
                 name: petclinic-config
+            - secretRef:
+                name: {{ $.Values.mysql.secretName }}
           readinessProbe:
             httpGet:
               path: /actuator/health

@@ -1,11 +1,14 @@
 registry: 622215956811.dkr.ecr.ap-south-1.amazonaws.com
 imageTag: v1.0
 
-# SPRING_PROFILES_ACTIVE=docker points every service at http://config-server:8888
-# Add ",mysql" here in Day 4 once MySQL is deployed
-springProfiles: docker
+springProfiles: docker,mysql
 
 eurekaUrl: http://discovery-server:8761/eureka
+
+mysql:
+  url: jdbc:mysql://mysql:3306/petclinic?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+  username: petclinic
+  secretName: mysql-secret
 
 services:
   config-server:
@@ -49,6 +52,8 @@ services:
         url: http://config-server:8888/actuator/health
       - name: wait-discovery
         url: http://discovery-server:8761/actuator/health
+      - name: wait-mysql
+        url: tcp://mysql:3306
 
   vets-service:
     port: 8083
@@ -65,6 +70,8 @@ services:
         url: http://config-server:8888/actuator/health
       - name: wait-discovery
         url: http://discovery-server:8761/actuator/health
+      - name: wait-mysql
+        url: tcp://mysql:3306
 
   visits-service:
     port: 8082
@@ -81,6 +88,8 @@ services:
         url: http://config-server:8888/actuator/health
       - name: wait-discovery
         url: http://discovery-server:8761/actuator/health
+      - name: wait-mysql
+        url: tcp://mysql:3306
 
   api-gateway:
     port: 8080
