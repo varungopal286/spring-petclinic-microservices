@@ -1,5 +1,5 @@
-registry: 622215956811.dkr.ecr.ap-south-1.amazonaws.com
-imageTag: v1.0
+registry: 721449410291.dkr.ecr.ap-south-1.amazonaws.com
+imageTag: latest
 
 springProfiles: docker,mysql
 
@@ -106,6 +106,28 @@ services:
         url: tcp://config-server:8888
       - name: wait-discovery
         url: tcp://discovery-server:8761
+
+  genai-service:
+    port: 8084
+    replicas: 1
+    resources:
+      requests:
+        cpu: 200m
+        memory: 384Mi
+      limits:
+        cpu: 700m
+        memory: 640Mi
+    initContainers:
+      - name: wait-config
+        url: tcp://config-server:8888
+      - name: wait-discovery
+        url: tcp://discovery-server:8761
+    extraEnv:
+      - name: OPENAI_API_KEY
+        valueFrom:
+          secretKeyRef:
+            name: openai-secret
+            key: OPENAI_API_KEY
 
 ingress:
   annotations:

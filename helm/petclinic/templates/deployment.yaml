@@ -52,6 +52,10 @@ spec:
                 name: petclinic-config
             - secretRef:
                 name: {{ $.Values.mysql.secretName }}
+          {{- if $svc.extraEnv }}
+          env:
+            {{- toYaml $svc.extraEnv | nindent 12 }}
+          {{- end }}
           readinessProbe:
             httpGet:
               path: /actuator/health

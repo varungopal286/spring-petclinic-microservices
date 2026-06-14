@@ -98,10 +98,6 @@ helm install aws-load-balancer-controller eks/aws-load-balancer-controller \
   --set clusterName=petclinic-cluster \
   --set serviceAccount.annotations."eks\.amazonaws\.com/role-arn"=<ALB_ROLE_ARN>
 
-# Install EBS CSI Driver (required for PVC provisioning on EKS 1.23+)
-aws eks create-addon --cluster-name petclinic-cluster \
-  --addon-name aws-ebs-csi-driver --region ap-south-1
-
 # Build and push Docker images
 cat > /tmp/docker-wrapper << 'EOF'
 #!/bin/bash
@@ -188,15 +184,17 @@ kubectl apply -f k8s/resource-quota.yaml
 
 ## Cost Management
 
-```bash
-# Stop EC2 billing (preserves data)
-./scripts/destroy-nodes.sh
+The cluster runs ~$150/month. To eliminate costs between sessions, fully destroy and restore:
 
-# Restore cluster
-./scripts/restore-nodes.sh
+```bash
+# Tear down all AWS infrastructure (ECR images are preserved)
+cd terraform && terraform destroy
+
+# Restore everything from scratch (~40 minutes)
+./scripts/restore-cluster.sh
 ```
 
-> **Note:** EBS volumes and ALB continue to incur small charges even when nodes are stopped.
+ECR image storage costs ~$0.50/month and is left intact so no rebuild is needed on restore.
 
 ---
 
@@ -220,8 +218,7 @@ kubectl apply -f k8s/resource-quota.yaml
 │   └── resource-quota.yaml        # Namespace resource limits
 ├── scripts/
 │   ├── chaos-demo.sh              # Kill a pod, watch self-healing
-│   ├── destroy-nodes.sh           # Scale nodes to 0 (save cost)
-│   └── restore-nodes.sh           # Scale nodes back to 2
+│   └── restore-cluster.sh         # Full cluster restore from zero (~40 min)
 ├── terraform/                     # EKS, VPC, ECR, IAM via Terraform
 │   ├── backend.tf
 │   ├── vpc.tf
